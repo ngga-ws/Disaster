@@ -9,143 +9,216 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #0f172a; }
+
+        /* Login Screen */
         #login-screen { 
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #1e40af;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+            color: white; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
         }
+
+        /* Map */
         #map { width: 100vw; height: 100vh; }
-        .legend {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-size: 14px;
-        }
-        .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+        /* User Bar */
         .user-bar {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            background: white;
-            color: #111;
-            padding: 6px 12px;
-            border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 1000;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            position: absolute; top: 15px; right: 20px;
+            background: rgba(255,255,255,0.95);
+            color: #111; padding: 8px 14px; border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1000;
+            font-size: 13px; display: flex; align-items: center; gap: 10px;
         }
+        .logout-btn {
+            background: #dc2626; color: white; border: none;
+            padding: 4px 10px; border-radius: 12px; font-size: 11px; cursor: pointer;
+        }
+
+        /* Disaster Selector Menu */
+        .disaster-menu {
+            position: absolute; top: 15px; left: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 12px 16px; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1000;
+            font-size: 14px; min-width: 200px;
+        }
+        .menu-title { font-weight: bold; margin-bottom: 8px; color: #1e293b; }
+        .menu-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 8px; border-radius: 6px;
+            cursor: pointer; transition: background 0.2s;
+            margin: 2px 0;
+        }
+        .menu-item:hover { background: #e2e8f0; }
+        .menu-item.active { background: #bfdbfe; font-weight: 500; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+        /* 3D ANIMATED MARKER STYLES */
+        .marker-3d {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* Tornado: Spinning + Funnel */
+        .tornado-anim {
+            width: 24px; height: 24px;
+            background: conic-gradient(#dc2626, #f87171, #dc2626);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite, pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 10px #dc2626, 0 0 20px #dc262680;
+        }
+
+        /* Tsunami: Wave Motion */
+        .tsunami-anim {
+            width: 28px; height: 16px;
+            background: #0ea5e9;
+            border-radius: 50%;
+            animation: wave 1s ease-in-out infinite;
+            box-shadow: 0 0 12px #0ea5e9, 0 0 20px #0ea5e980;
+        }
+
+        /* Typhoon: Fast Spin + Glow */
+        .typhoon-anim {
+            width: 26px; height: 26px;
+            background: conic-gradient(#ea580c, #fbbf24, #ea580c);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite, pulse 1s ease-in-out infinite;
+            box-shadow: 0 0 15px #ea580c, 0 0 25px #ea580c80;
+        }
+
+        /* Earthquake: Shake + Ripple */
+        .quake-anim {
+            width: 22px; height: 22px;
+            background: #7c3aed;
+            border-radius: 4px;
+            animation: shake 0.5s ease-in-out infinite, ripple 2s linear infinite;
+            box-shadow: 0 0 12px #7c3aed, 0 0 20px #7c3aed80;
+        }
+
+        /* Flood: Expand + Fade */
+        .flood-anim {
+            width: 20px; height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            animation: expand 2s ease-in-out infinite;
+            box-shadow: 0 0 12px #2563eb, 0 0 20px #2563eb80;
+        }
+
+        /* Volcano: Erupt + Pulse */
+        .volcano-anim {
+            width: 24px; height: 24px;
+            background: #ef4444;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation: erupt 1.5s ease-in-out infinite;
+            box-shadow: 0 0 14px #ef4444, 0 0 22px #ef444480;
+        }
+
+        /* Storm: Rotate + Flash */
+        .storm-anim {
+            width: 26px; height: 26px;
+            background: #64748b;
+            border-radius: 50%;
+            animation: spin 2s linear infinite, flash 1s ease-in-out infinite;
+            box-shadow: 0 0 12px #64748b, 0 0 20px #64748b80;
+        }
+
+        /* ANIMATION KEYFRAMES */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        @keyframes wave { 0%,100% { transform: translateY(0) scaleX(1); } 50% { transform: translateY(-6px) scaleX(1.2); } }
+        @keyframes shake { 0%,100% { transform: translate(0,0); } 25% { transform: translate(-3px,2px); } 75% { transform: translate(3px,-2px); } }
+        @keyframes expand { 0% { transform: scale(0.8); opacity: 0.7; } 100% { transform: scale(1.4); opacity: 0; } }
+        @keyframes erupt { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2) translateY(-4px); } }
+        @keyframes flash { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes ripple { 0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6); } 100% { box-shadow: 0 0 0 15px rgba(124, 58, 237, 0); } }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN - ONLY SHOWS IF NOT VERIFIED -->
+    <!-- LOGIN SCREEN -->
     <div id="login-screen">
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold mb-2">PredictDisaster.org</h1>
-            <p class="text-lg opacity-90">Global Disaster Tracking • Tornado • Tsunami • Typhoon • Earthquake</p>
-            <p class="text-sm mt-2 opacity-75">Sign in with Google to access verified map data</p>
+            <p class="text-lg opacity-90">Global Disaster Tracking • Live 3D Animations</p>
+            <p class="text-sm mt-2 opacity-75">Sign in with Google — stays logged in</p>
         </div>
 
-        <!-- GOOGLE LOGIN WITH VERIFICATION -->
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleLogin"
-             data-auto_prompt="false"
-             data-context="signin"
-             data-ux_mode="popup">
+             data-auto_prompt="false">
         </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_blue" data-text="signin_with"></div>
-
-        <p class="text-xs mt-6 opacity-70">Verified access • Data saved automatically</p>
     </div>
 
-    <!-- FULL SCREEN MAP -->
+    <!-- MAP CONTAINER -->
     <div id="map-container" style="display: none;">
         <div id="map"></div>
 
-        <!-- USER INFO BAR -->
-        <div class="user-bar" id="user-bar">
+        <!-- USER BAR -->
+        <div class="user-bar">
             <span id="user-email"></span>
-            <button onclick="logout()" style="background:#dc2626; color:white; border:none; padding:3px 8px; border-radius:12px; font-size:11px; cursor:pointer;">Logout</button>
+            <button onclick="logout()" class="logout-btn">Logout</button>
         </div>
 
-        <!-- LEGEND -->
-        <div class="legend">
-            <h4 style="margin:0 0 8px 0; font-weight:bold;">Disaster Types</h4>
-            <div class="legend-item"><span class="dot" style="background:#dc2626"></span> Tornado</div>
-            <div class="legend-item"><span class="dot" style="background:#0ea5e9"></span> Tsunami (Forming)</div>
-            <div class="legend-item"><span class="dot" style="background:#ea580c"></span> Typhoon / Cyclone</div>
-            <div class="legend-item"><span class="dot" style="background:#7c3aed"></span> Earthquake</div>
-            <div class="legend-item"><span class="dot" style="background:#2563eb"></span> Flood</div>
-            <div class="legend-item"><span class="dot" style="background:#ef4444"></span> Volcano</div>
-            <div class="legend-item"><span class="dot" style="background:#64748b"></span> Severe Storm</div>
+        <!-- DISASTER SELECTOR MENU -->
+        <div class="disaster-menu">
+            <div class="menu-title">Show / Hide Disasters</div>
+            <div class="menu-item active" data-type="tornado" onclick="toggleDisaster('tornado')">
+                <span class="dot" style="background:#dc2626"></span> Tornado
+            </div>
+            <div class="menu-item active" data-type="tsunami" onclick="toggleDisaster('tsunami')">
+                <span class="dot" style="background:#0ea5e9"></span> Tsunami (Forming)
+            </div>
+            <div class="menu-item active" data-type="typhoon" onclick="toggleDisaster('typhoon')">
+                <span class="dot" style="background:#ea580c"></span> Typhoon / Cyclone
+            </div>
+            <div class="menu-item active" data-type="earthquake" onclick="toggleDisaster('earthquake')">
+                <span class="dot" style="background:#7c3aed"></span> Earthquake
+            </div>
+            <div class="menu-item active" data-type="flood" onclick="toggleDisaster('flood')">
+                <span class="dot" style="background:#2563eb"></span> Flood
+            </div>
+            <div class="menu-item active" data-type="volcano" onclick="toggleDisaster('volcano')">
+                <span class="dot" style="background:#ef4444"></span> Volcano
+            </div>
+            <div class="menu-item active" data-type="storm" onclick="toggleDisaster('storm')">
+                <span class="dot" style="background:#64748b"></span> Severe Storm
+            </div>
         </div>
     </div>
 
     <script>
         let map;
         let currentUser = null;
+        let markers = {}; // store markers to show/hide
 
         // --------------------------
-        // VERIFICATION & DATA SAVE
+        // LOGIN & VERIFICATION
         // --------------------------
         function handleGoogleLogin(response) {
-            // VERIFY GOOGLE ID TOKEN
             const token = response.credential;
             const payload = JSON.parse(atob(token.split('.')[1]));
-            
-            // SAVE USER DATA TO LOCAL STORAGE (SAVES AFTER REFRESH)
-            currentUser = {
-                email: payload.email,
-                name: payload.name,
-                verified: true,
-                loginTime: new Date().toISOString()
-            };
+            currentUser = { email: payload.email, verified: true };
             localStorage.setItem('predictDisasterUser', JSON.stringify(currentUser));
-            
-            // SHOW MAP, HIDE LOGIN
             showMapView();
         }
 
-        // CHECK IF ALREADY LOGGED IN / VERIFIED
         function checkExistingLogin() {
             const saved = localStorage.getItem('predictDisasterUser');
             if (saved) {
                 try {
                     currentUser = JSON.parse(saved);
-                    if (currentUser.verified) {
-                        showMapView();
-                        return true;
-                    }
-                } catch (e) {
-                    localStorage.removeItem('predictDisasterUser');
-                }
+                    if (currentUser.verified) { showMapView(); return true; }
+                } catch (e) { localStorage.removeItem('predictDisasterUser'); }
             }
             return false;
         }
 
         function logout() {
             localStorage.removeItem('predictDisasterUser');
-            currentUser = null;
             location.reload();
         }
 
@@ -157,115 +230,82 @@
         }
 
         // --------------------------
-        // MAP & DISASTERS
+        // CREATE 3D ANIMATED MARKER
+        // --------------------------
+        function create3DMarker(type) {
+            const animClass = {
+                tornado: 'tornado-anim',
+                tsunami: 'tsunami-anim',
+                typhoon: 'typhoon-anim',
+                earthquake: 'quake-anim',
+                flood: 'flood-anim',
+                volcano: 'volcano-anim',
+                storm: 'storm-anim'
+            };
+
+            return L.divIcon({
+                className: 'marker-3d',
+                html: `<div class="${animClass[type]}"></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+        }
+
+        // --------------------------
+        // TOGGLE SHOW / HIDE
+        // --------------------------
+        function toggleDisaster(type) {
+            const menuItem = document.querySelector(`[data-type="${type}"]`);
+            menuItem.classList.toggle('active');
+
+            if (markers[type]) {
+                if (menuItem.classList.contains('active')) {
+                    markers[type].forEach(m => m.addTo(map));
+                } else {
+                    markers[type].forEach(m => map.removeLayer(m));
+                }
+            }
+        }
+
+        // --------------------------
+        // INIT MAP & DISASTERS
         // --------------------------
         function initMap() {
-            // INIT FULL GLOBAL MAP
-            map = L.map('map', {
-                center: [20, 0],
-                zoom: 2,
-                minZoom: 2,
-                maxZoom: 18,
-                zoomControl: true
-            });
+            map = L.map('map', { center: [20, 0], zoom: 2, minZoom: 2, maxZoom: 18 });
 
-            // WORLD MAP BASE
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; PredictDisaster.org | OpenStreetMap',
-                noWrap: true
+                attribution: '&copy; PredictDisaster.org', noWrap: true
             }).addTo(map);
 
             map.setMaxBounds([[-90, -180], [90, 180]]);
 
-            // DISASTER COLORS
-            const disasterColors = {
-                tornado: '#dc2626',
-                tsunami: '#0ea5e9',
-                typhoon: '#ea580c',
-                earthquake: '#7c3aed',
-                flood: '#2563eb',
-                volcano: '#ef4444',
-                storm: '#64748b'
-            };
-
-            // CUSTOM MARKER
-            function createMarker(color) {
-                return L.divIcon({
-                    className: 'custom-marker',
-                    html: `<div style="width:16px;height:16px;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.5)"></div>`,
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                });
-            }
-
-            // ALL DISASTERS YOU WANTED
+            // DISASTER DATA
             const disasters = [
-                {
-                    type: 'tornado',
-                    name: 'Tornado Warning',
-                    lat: 35.8, lon: -98.5,
-                    info: 'Tornado on ground | Moving NE | USA'
-                },
-                {
-                    type: 'tsunami',
-                    name: 'Tsunami (Forming)',
-                    lat: 32.3, lon: 142.1,
-                    info: 'Underwater earthquake detected | Tsunami waves forming | Japan'
-                },
-                {
-                    type: 'typhoon',
-                    name: 'Super Typhoon',
-                    lat: 9.2, lon: 128.4,
-                    info: 'Winds 185km/h | Signal No.4 | Philippines'
-                },
-                {
-                    type: 'earthquake',
-                    name: 'Magnitude 7.2 Quake',
-                    lat: -15.5, lon: -72.8,
-                    info: 'Depth 12km | Strong shaking reported | Peru'
-                },
-                {
-                    type: 'flood',
-                    name: 'Major Flood',
-                    lat: -33.8, lon: 151.0,
-                    info: 'Heavy rain | River overflow | Australia'
-                },
-                {
-                    type: 'volcano',
-                    name: 'Volcano Eruption',
-                    lat: 19.4, lon: -98.6,
-                    info: 'Ash cloud rising | Evacuation zone | Mexico'
-                },
-                {
-                    type: 'storm',
-                    name: 'Severe Storm',
-                    lat: 54.0, lon: -4.5,
-                    info: 'Hurricane force winds | UK'
-                }
+                { type: 'tornado', name: 'Tornado Warning', lat: 35.8, lon: -98.5, info: 'Tornado on ground | USA' },
+                { type: 'tsunami', name: 'Tsunami (Forming)', lat: 32.3, lon: 142.1, info: 'Underwater quake | Waves forming | Japan' },
+                { type: 'typhoon', name: 'Super Typhoon', lat: 9.2, lon: 128.4, info: '185km/h winds | Signal 4 | Philippines' },
+                { type: 'earthquake', name: 'M7.2 Earthquake', lat: -15.5, lon: -72.8, info: 'Depth 12km | Strong shake | Peru' },
+                { type: 'flood', name: 'Major Flood', lat: -33.8, lon: 151.0, info: 'River overflow | Australia' },
+                { type: 'volcano', name: 'Volcano Eruption', lat: 19.4, lon: -98.6, info: 'Ash cloud | Evacuate | Mexico' },
+                { type: 'storm', name: 'Severe Storm', lat: 54.0, lon: -4.5, info: 'Hurricane winds | UK' }
             ];
 
-            // ADD DISASTERS + SAVE DATA
+            // GROUP MARKERS BY TYPE
             disasters.forEach(d => {
-                const marker = L.marker([d.lat, d.lon], {
-                    icon: createMarker(disasterColors[d.type])
-                }).addTo(map);
+                const marker = L.marker([d.lat, d.lon], { icon: create3DMarker(d.type) })
+                    .bindPopup(`<b>${d.name}</b><br>${d.info}`);
 
-                marker.bindPopup(`
-                    <div style="min-width:180px;">
-                        <h3 style="margin:0 0 5px 0; font-weight:bold;">${d.name}</h3>
-                        <p style="margin:0; font-size:13px;">${d.info}</p>
-                    </div>
-                `);
+                if (!markers[d.type]) markers[d.type] = [];
+                markers[d.type].push(marker);
+                marker.addTo(map);
             });
 
-            // SAVE DISASTER DATA LOCALLY
+            // SAVE DATA
             localStorage.setItem('predictDisasterData', JSON.stringify(disasters));
         }
 
-        // RUN ON PAGE LOAD
-        window.onload = function() {
-            checkExistingLogin();
-        };
+        window.onload = checkExistingLogin;
     </script>
 </body>
-</html>
+    </html>
+    
