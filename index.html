@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tornado Formation Simulator</title>
+    <title>Ultimate Tornado Simulator | Realistic Shapes & Effects</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -11,11 +11,16 @@
             theme: {
                 extend: {
                     colors: {
-                        sky: '#87CEEB',
-                        storm: '#4A5568',
-                        dirt: '#8B4513',
-                        funnel: '#D3D3D3',
-                        supercell: '#2C3E50'
+                        skyLight: '#87CEEB',
+                        skyStorm: '#4A6FA5',
+                        skyDark: '#2C3E50',
+                        dirt: '#784A27',
+                        dirtLight: '#A67C52',
+                        funnelBase: '#D0D0D0',
+                        funnelDark: '#707070',
+                        funnelGray: '#B8B8B8',
+                        water: '#4A90E2',
+                        cloud: '#E0E6ED',
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -26,302 +31,363 @@
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto {
-                content-visibility: auto;
+            .content-auto { content-visibility: auto; }
+
+            /* REALISTIC TORNADO SHAPES */
+            .tornado-supercell {
+                clip-path: polygon(
+                    48% 0%, 52% 0%,
+                    65% 15%, 72% 40%, 75% 70%, 70% 100%,
+                    30% 100%, 25% 70%, 28% 40%, 35% 15%
+                );
             }
-            .tornado-path {
-                clip-path: polygon(45% 0%, 55% 0%, 70% 100%, 30% 100%);
+            .tornado-landspout {
+                clip-path: polygon(
+                    49% 0%, 51% 0%,
+                    58% 20%, 62% 50%, 60% 80%, 55% 100%,
+                    45% 100%, 40% 80%, 38% 50%, 42% 20%
+                );
             }
-            .rotate-slow {
-                animation: rotate 8s linear infinite;
+            .tornado-waterspout {
+                clip-path: polygon(
+                    48% 0%, 52% 0%,
+                    60% 25%, 65% 60%, 62% 90%, 58% 100%,
+                    42% 100%, 38% 90%, 35% 60%, 40% 25%
+                );
             }
-            .rotate-medium {
-                animation: rotate 5s linear infinite;
+            .tornado-multiple {
+                clip-path: polygon(
+                    47% 0%, 53% 0%,
+                    70% 20%, 78% 50%, 80% 80%, 72% 100%,
+                    28% 100%, 20% 80%, 22% 50%, 30% 20%
+                );
             }
-            .rotate-fast {
-                animation: rotate 3s linear infinite;
-            }
-            .swirl {
-                animation: swirl 4s ease-in-out infinite alternate;
-            }
+
+            /* ANIMATIONS */
+            .rotate-slow { animation: rotate 10s linear infinite; }
+            .rotate-medium { animation: rotate 6s linear infinite; }
+            .rotate-fast { animation: rotate 3.5s linear infinite; }
+            .swirl-gentle { animation: swirlGentle 5s ease-in-out infinite alternate; }
+            .swirl-wild { animation: swirlWild 2.5s ease-in-out infinite alternate; }
+            .pulse-cloud { animation: pulseCloud 4s ease-in-out infinite; }
+            .rise-debris { animation: riseDebris 2.5s linear infinite; }
+            .wave-water { animation: waveWater 3s ease-in-out infinite alternate; }
+
             @keyframes rotate {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
             }
-            @keyframes swirl {
-                0% { transform: translateX(-5%) rotate(2deg); }
-                100% { transform: translateX(5%) rotate(-2deg); }
+            @keyframes swirlGentle {
+                0% { transform: translateX(-3%) rotate(1deg) scaleY(0.98); }
+                100% { transform: translateX(3%) rotate(-1deg) scaleY(1.02); }
             }
-            .dust-particle {
+            @keyframes swirlWild {
+                0% { transform: translateX(-6%) rotate(3deg) scaleY(0.95); }
+                100% { transform: translateX(6%) rotate(-3deg) scaleY(1.05); }
+            }
+            @keyframes pulseCloud {
+                0%, 100% { opacity: 0.85; transform: scale(1); }
+                50% { opacity: 1; transform: scale(1.02); }
+            }
+            @keyframes riseDebris {
+                0% { transform: translateY(20px) scale(0.4); opacity: 0.5; }
+                100% { transform: translateY(-120px) scale(1); opacity: 0; }
+            }
+            @keyframes waveWater {
+                0% { transform: skewX(-2deg); }
+                100% { transform: skewX(2deg); }
+            }
+
+            .particle {
                 position: absolute;
-                background-color: #A0522D;
                 border-radius: 50%;
-                opacity: 0.7;
-                animation: rise 3s linear infinite;
+                opacity: 0.6;
             }
-            @keyframes rise {
-                0% { transform: translateY(20px) scale(0.5); opacity: 0.4; }
-                100% { transform: translateY(-100px) scale(1); opacity: 0; }
+            .layer {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.15) 30%, transparent 50%);
             }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col overflow-x-hidden">
     <!-- Header -->
-    <header class="bg-storm/80 backdrop-blur-md py-4 px-6 shadow-lg">
+    <header class="bg-black/40 backdrop-blur-lg py-5 px-6 shadow-2xl border-b border-white/10">
         <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <h1 class="text-[clamp(1.8rem,4vw,3rem)] font-bold text-white flex items-center gap-3">
-                <i class="fa fa-tornado text-blue-300"></i>
-                Tornado Formation Simulator
+            <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-white flex items-center gap-4 drop-shadow-[0_0_15px_rgba(135,206,235,0.5)]">
+                <i class="fa fa-tornado text-skyLight text-4xl"></i>
+                <span class="bg-gradient-to-r from-skyLight to-blue-400 bg-clip-text text-transparent">Tornado Lab</span>
             </h1>
-            <p class="text-gray-300 text-sm md:text-base mt-2 md:mt-0">See how different tornadoes form and behave</p>
+            <p class="text-gray-300 text-base md:text-lg mt-2 md:mt-0 italic">Realistic shapes • Accurate physics • Stunning visuals</p>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
+    <main class="flex-grow container mx-auto px-4 py-10">
         <!-- Controls -->
-        <div class="bg-storm/40 rounded-xl p-6 mb-8 shadow-xl">
-            <h2 class="text-xl font-semibold mb-4">Choose Tornado Type</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <button onclick="selectTornado('supercell')" id="btn-supercell" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
-                    <span class="block font-bold">Supercell Tornado</span>
-                    <span class="text-xs text-gray-300">Strongest, most destructive</span>
+        <div class="bg-white/5 backdrop-blur-md rounded-2xl p-7 mb-10 shadow-2xl border border-white/10">
+            <h2 class="text-2xl font-bold mb-6 text-center">🌪️ Choose Tornado Type</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+                <button onclick="selectTornado('supercell')" id="btn-supercell" class="tornado-btn group relative overflow-hidden rounded-xl p-4 border-2 border-transparent transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(135,206,235,0.3)]">
+                    <div class="absolute inset-0 bg-gradient-to-br from-skyDark/80 to-gray-800/80 -z-10"></div>
+                    <span class="block font-bold text-lg">Supercell</span>
+                    <span class="text-xs text-gray-300">Most powerful, large & wide</span>
                 </button>
-                <button onclick="selectTornado('landspout')" id="btn-landspout" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
-                    <span class="block font-bold">Landspout</span>
-                    <span class="text-xs text-gray-300">Weak, narrow, rope-like</span>
+                <button onclick="selectTornado('landspout')" id="btn-landspout" class="tornado-btn group relative overflow-hidden rounded-xl p-4 border-2 border-transparent transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(135,206,235,0.3)]">
+                    <div class="absolute inset-0 bg-gradient-to-br from-skyDark/80 to-gray-800/80 -z-10"></div>
+                    <span class="block font-bold text-lg">Landspout</span>
+                    <span class="text-xs text-gray-300">Narrow, rope-like, thin shape</span>
                 </button>
-                <button onclick="selectTornado('waterspout')" id="btn-waterspout" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
-                    <span class="block font-bold">Waterspout</span>
-                    <span class="text-xs text-gray-300">Forms over water</span>
+                <button onclick="selectTornado('waterspout')" id="btn-waterspout" class="tornado-btn group relative overflow-hidden rounded-xl p-4 border-2 border-transparent transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(135,206,235,0.3)]">
+                    <div class="absolute inset-0 bg-gradient-to-br from-skyDark/80 to-blue-900/80 -z-10"></div>
+                    <span class="block font-bold text-lg">Waterspout</span>
+                    <span class="text-xs text-gray-300">Smooth, slender, over water</span>
                 </button>
-                <button onclick="selectTornado('multiple-vortex')" id="btn-multiple-vortex" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
-                    <span class="block font-bold">Multiple-Vortex</span>
-                    <span class="text-xs text-gray-300">Smaller funnels inside main</span>
+                <button onclick="selectTornado('multiple-vortex')" id="btn-multiple-vortex" class="tornado-btn group relative overflow-hidden rounded-xl p-4 border-2 border-transparent transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(135,206,235,0.3)]">
+                    <div class="absolute inset-0 bg-gradient-to-br from-skyDark/80 to-gray-900/80 -z-10"></div>
+                    <span class="block font-bold text-lg">Multiple-Vortex</span>
+                    <span class="text-xs text-gray-300">Wide, with small inner funnels</span>
                 </button>
             </div>
         </div>
 
         <!-- Simulation Area -->
-        <div class="relative w-full h-[500px] bg-sky/30 rounded-xl overflow-hidden shadow-2xl mb-8">
+        <div class="relative w-full h-[600px] rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] mb-10 border-4 border-white/10">
             <!-- Sky & Clouds -->
-            <div id="sky" class="absolute top-0 left-0 w-full h-3/4 bg-gradient-to-b from-sky to-gray-700 transition-all duration-1000">
+            <div id="sky" class="absolute top-0 left-0 w-full h-3/4 bg-gradient-to-b from-skyLight via-skyStorm to-skyDark transition-all duration-1000">
                 <div id="clouds" class="absolute w-full h-full overflow-hidden">
-                    <!-- Cloud layers will be added via JS -->
+                    <!-- Big storm clouds -->
+                    <div class="absolute top-[10%] left-[10%] w-[80%] h-[60%] bg-cloud/90 rounded-[50%] blur-md pulse-cloud"></div>
+                    <div class="absolute top-[5%] left-[20%] w-[60%] h-[50%] bg-cloud/80 rounded-[50%] blur-lg pulse-cloud" style="animation-delay: 0.5s"></div>
+                    <div class="absolute top-[15%] left-[0%] w-[40%] h-[40%] bg-cloud/70 rounded-[50%] blur-md pulse-cloud" style="animation-delay: 1s"></div>
                 </div>
             </div>
 
-            <!-- Ground -->
-            <div id="ground" class="absolute bottom-0 left-0 w-full h-1/4 bg-dirt/80 transition-all duration-1000"></div>
+            <!-- Ground / Water -->
+            <div id="ground" class="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-dirt to-dirtLight/80 transition-all duration-1000"></div>
 
-            <!-- Tornado Container -->
+            <!-- MAIN TORNADO -->
             <div id="tornado-container" class="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-full h-[75%] flex justify-center items-end">
-                <div id="tornado" class="tornado-path w-20 origin-bottom transition-all duration-700 opacity-0">
-                    <!-- Tornado layers -->
-                    <div class="relative w-full h-full rotate-medium">
-                        <div class="absolute w-full h-full bg-funnel/90"></div>
-                        <div class="absolute w-[80%] h-full left-[10%] bg-funnel/80"></div>
-                        <div class="absolute w-[60%] h-full left-[20%] bg-funnel/70"></div>
-                        <div class="absolute w-[40%] h-full left-[30%] bg-funnel/60"></div>
+                <div id="tornado" class="origin-bottom transition-all duration-1000 opacity-0">
+                    <!-- Multi-layered realistic tornado -->
+                    <div class="relative w-full h-full rotate-medium swirl-gentle">
+                        <div class="absolute w-full h-full bg-gradient-to-b from-funnelBase via-funnelGray to-funnelDark/90"></div>
+                        <div class="layer"></div>
+                        <div class="absolute w-[85%] h-full left-[7.5%] bg-gradient-to-b from-white/40 to-funnelGray/60"></div>
+                        <div class="absolute w-[65%] h-full left-[17.5%] bg-gradient-to-b from-funnelBase/50 to-funnelDark/50"></div>
+                        <div class="absolute w-[40%] h-full left-[30%] bg-gradient-to-b from-white/30 to-funnelGray/40"></div>
                     </div>
                 </div>
 
-                <!-- Multiple Vortex Add-ons -->
-                <div id="sub-vortices" class="absolute bottom-0 w-full h-full opacity-0">
-                    <div class="absolute bottom-0 left-[40%] w-8 h-40 tornado-path rotate-fast bg-gray-400/80 origin-bottom"></div>
-                    <div class="absolute bottom-0 left-[55%] w-6 h-32 tornado-path rotate-fast bg-gray-400/70 origin-bottom"></div>
+                <!-- SUB-VORTICES (only for multiple-vortex) -->
+                <div id="sub-vortices" class="absolute bottom-0 w-full h-full opacity-0 transition-opacity duration-700">
+                    <div class="absolute bottom-0 left-[35%] w-10 h-56 tornado-supercell rotate-fast swirl-wild bg-gradient-to-b from-funnelBase via-funnelGray to-funnelDark/90 origin-bottom blur-[1px]"></div>
+                    <div class="absolute bottom-0 left-[52%] w-8 h-48 tornado-supercell rotate-fast swirl-wild bg-gradient-to-b from-funnelBase via-funnelGray to-funnelDark/90 origin-bottom blur-[1px]" style="animation-direction: reverse"></div>
+                    <div class="absolute bottom-0 left-[45%] w-6 h-40 tornado-supercell rotate-fast swirl-wild bg-gradient-to-b from-funnelBase via-funnelGray to-funnelDark/90 origin-bottom blur-[1px]"></div>
                 </div>
             </div>
 
-            <!-- Dust & Debris -->
-            <div id="debris-field" class="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-40 h-20 opacity-0">
-                <!-- Dust particles added via JS -->
-            </div>
+            <!-- DEBRIS / WATER SPRAY -->
+            <div id="debris-field" class="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-60 h-32 opacity-0 transition-opacity duration-700"></div>
 
-            <!-- Lightning -->
-            <div id="lightning" class="absolute top-1/4 left-1/2 -translate-x-1/2 w-1 h-20 bg-white opacity-0"></div>
+            <!-- LIGHTNING & STORM EFFECTS -->
+            <div id="lightning" class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[2px] h-32 bg-white opacity-0 blur-sm transition-all"></div>
+            <div id="rain" class="absolute w-full h-full opacity-0 transition-opacity duration-700 pointer-events-none"></div>
         </div>
 
-        <!-- Information Panel -->
-        <div id="info-panel" class="bg-storm/40 rounded-xl p-6 shadow-xl transition-all">
-            <h2 id="tornado-title" class="text-2xl font-bold mb-2">Select a Tornado Type</h2>
-            <p id="tornado-desc" class="text-gray-200 mb-4">Choose an option above to see how it forms and learn about its characteristics.</p>
-            <div id="formation-steps" class="space-y-2 text-sm">
-            </div>
+        <!-- Info Panel -->
+        <div id="info-panel" class="bg-white/5 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/10">
+            <h2 id="tornado-title" class="text-3xl font-bold mb-3 text-skyLight"></h2>
+            <p id="tornado-desc" class="text-gray-200 text-lg mb-6 leading-relaxed"></p>
+            <div id="formation-steps" class="space-y-3 text-base pl-4 border-l-2 border-skyLight/40"></div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-storm/80 py-4 text-center text-gray-400 text-sm">
-        <p>© 2026 Tornado Formation Simulator | Educational Tool</p>
-    </footer>
-
-    <!-- Script -->
+    <footer class="bg-black/40 backdrop-blur-md py-5 text-center text-gray-400 text-sm border-t border-white/10">
+        <p>© 2026 Tornado Lab • Realistic Shapes & Physics</p>
+        </footer>
+        <!-- Script -->
     <script>
         const tornadoData = {
             supercell: {
-                title: "Supercell Tornado",
-                description: "The strongest and most dangerous type of tornado, born from a rotating thunderstorm called a supercell. These can last for hours and produce winds over 300 mph.",
-                animation: {
-                    width: "12rem",
-                    height: "28rem",
-                    rotation: "rotate-medium",
-                    skyColor: "from-sky to-gray-800",
-                    groundColor: "bg-dirt",
-                    showLightning: true,
-                    showDebris: true,
-                    opacity: 1
-                },
+                title: "🌪️ Supercell Tornado",
+                description: "The largest, strongest, and most dangerous tornado. Born from a rotating thunderstorm (supercell), it has a wide, thick, cone-like shape with a very defined base. Winds can exceed 300 mph and last for hours.",
+                shape: "tornado-supercell",
+                width: "16rem",
+                height: "32rem",
+                rotation: "rotate-medium",
+                movement: "swirl-gentle",
+                sky: "from-skyLight via-skyStorm to-skyDark",
+                ground: "from-dirt to-dirtLight/70",
+                effects: { lightning: true, rain: true, debris: true, water: false },
                 steps: [
-                    "1. Warm, moist air meets cool, dry air, creating instability.",
-                    "2. Wind shear creates horizontal rotation in the lower atmosphere.",
-                    "3. Updrafts tilt the rotation upward, forming a mesocyclone.",
-                    "4. A rear-flank downdraft brings air down, tightening the rotation.",
-                    "5. The funnel cloud descends and touches the ground — tornado formed!"
+                    "Warm moist air rises and meets cold dry air — creates extreme instability.",
+                    "Wind shear creates horizontal tube of spinning air near ground.",
+                    "Strong updraft tilts spin upward → forms a rotating storm (mesocyclone).",
+                    "Downdrafts tighten rotation, making it faster and narrower.",
+                    "Funnel cloud descends, touches ground → massive tornado forms."
                 ]
             },
             landspout: {
-                title: "Landspout Tornado",
-                description: "A weaker, rope-like tornado that forms from growing cumulus clouds, not from a rotating supercell. Usually short-lived and less destructive.",
-                animation: {
-                    width: "4rem",
-                    height: "22rem",
-                    rotation: "rotate-slow",
-                    skyColor: "from-sky to-gray-600",
-                    groundColor: "bg-dirt/70",
-                    showLightning: false,
-                    showDebris: true,
-                    opacity: 0.9
-                },
+                title: "🪜 Landspout Tornado",
+                description: "Thin, rope-like, and narrow. Looks like a long twisting tube. Much weaker than supercells, short-lived, and forms from growing clouds, not rotating storms.",
+                shape: "tornado-landspout",
+                width: "5rem",
+                height: "26rem",
+                rotation: "rotate-slow",
+                movement: "swirl-gentle",
+                sky: "from-skyLight via-skyStorm/70 to-gray-600",
+                ground: "from-dirtLight/80 to-dirtLight/50",
+                effects: { lightning: false, rain: false, debris: true, water: false },
                 steps: [
-                    "1. Warm air rises and creates a developing cloud.",
-                    "2. Near-ground winds create a small area of spin.",
-                    "3. Updrafts stretch this rotation upward into the cloud.",
-                    "4. A narrow funnel forms but remains weak.",
-                    "5. Touches ground briefly then dissipates quickly."
+                    "Warm air rises quickly, creating puffy cumulus clouds.",
+                    "Light wind twists near the ground — small spin starts.",
+                    "Updraft stretches that spin upward into a thin column.",
+                    "Narrow funnel forms but stays weak and thin.",
+                    "Touches ground briefly then fades away fast."
                 ]
             },
             waterspout: {
-                title: "Waterspout Tornado",
-                description: "A tornado that forms over water or moves from land to water. Most are weak, but some can be strong enough to damage boats or coastal areas.",
-                animation: {
-                    width: "6rem",
-                    height: "24rem",
-                    rotation: "rotate-slow",
-                    skyColor: "from-sky to-blue-700/50",
-                    groundColor: "bg-blue-600/60",
-                    showLightning: false,
-                    showDebris: false,
-                    opacity: 0.95
-                },
+                title: "💧 Waterspout Tornado",
+                description: "Smooth, slender, and elegant shape — forms over water. Looks like a long, clean funnel sucking up spray. Most are weak, but some can move onto land.",
+                shape: "tornado-waterspout",
+                width: "7rem",
+                height: "28rem",
+                rotation: "rotate-slow",
+                movement: "swirl-gentle wave-water",
+                sky: "from-skyLight via-skyStorm/60 to-blue-700/40",
+                ground: "from-water to-skyLight/30",
+                effects: { lightning: false, rain: false, debris: false, water: true },
                 steps: [
-                    "1. Cool air moves over warm water, creating instability.",
-                    "2. Small wind shifts create gentle rotation near the surface.",
-                    "3. Updrafts pull the rotating air upward.",
-                    "4. Condensation forms a funnel that draws up water spray.",
-                    "5. Moves slowly; usually dissipates quickly over land."
+                    "Cool air moves over warm water — creates instability.",
+                    "Gentle wind shifts create soft rotation near surface.",
+                    "Updrafts pull spinning air upward.",
+                    "Moisture condenses into smooth funnel, pulls water spray up.",
+                    "Moves slowly; dies quickly when hitting land."
                 ]
             },
             "multiple-vortex": {
-                title: "Multiple-Vortex Tornado",
-                description: "A tornado with two or more small, intense funnels (sub-vortices) spinning inside the main circulation. These produce the most extreme damage paths.",
-                animation: {
-                    width: "14rem",
-                    height: "30rem",
-                    rotation: "rotate-fast",
-                    skyColor: "from-sky to-gray-900",
-                    groundColor: "bg-dirt",
-                    showLightning: true,
-                    showDebris: true,
-                    opacity: 1
-                },
+                title: "🎯 Multiple-Vortex Tornado",
+                description: "Very wide, thick, and chaotic. Inside the main funnel spin smaller, faster sub-vortices (mini-tornadoes). This is the most destructive shape — leaves narrow damage paths.",
+                shape: "tornado-multiple",
+                width: "18rem",
+                height: "34rem",
+                rotation: "rotate-fast",
+                movement: "swirl-wild",
+                sky: "from-skyLight via-skyStorm to-gray-900",
+                ground: "from-dirt to-dirtLight/60",
+                effects: { lightning: true, rain: true, debris: true, water: false },
                 steps: [
-                    "1. Same supercell formation as strong tornadoes.",
-                    "2. Very strong rotation creates shear within the funnel.",
-                    "3. Smaller pockets of rotation break off inside the main vortex.",
-                    "4. These sub-vortices spin rapidly around the center.",
-                    "5. Creates narrow, intense swaths of destruction."
+                    "Same powerful supercell formation as big tornadoes.",
+                    "Extreme rotation creates shear inside the funnel.",
+                    "Main vortex breaks into smaller, faster spinning pockets.",
+                    "These sub-vortices race around the center.",
+                    "Causes intense, narrow strips of destruction."
                 ]
             }
         };
 
-        // Generate dust particles
-        function createDebris() {
-            const debris = document.getElementById('debris-field');
-            debris.innerHTML = '';
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.classList.add('dust-particle');
-                particle.style.width = `${Math.random() * 6 + 2}px`;
-                particle.style.height = particle.style.width;
-                particle.style.left = `${Math.random() * 100}%`;
-                particle.style.animationDelay = `${Math.random() * 2}s`;
-                debris.appendChild(particle);
+        // Generate particles
+        function createParticles(containerId, count, color) {
+            const el = document.getElementById(containerId);
+            el.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle', 'rise-debris');
+                p.style.width = `${Math.random() * 8 + 2}px`;
+                p.style.height = p.style.width;
+                p.style.left = `${Math.random() * 100}%`;
+                p.style.bottom = '0';
+                p.style.background = color;
+                p.style.animationDelay = `${Math.random() * 3}s`;
+                el.appendChild(p);
             }
         }
 
-        createDebris();
-
-        // Lightning flash effect
+        // Lightning flash
         function flashLightning() {
-            const lightning = document.getElementById('lightning');
-            lightning.style.opacity = 1;
-            setTimeout(() => lightning.style.opacity = 0, 100);
+            const l = document.getElementById('lightning');
+            l.style.opacity = 1;
+            l.style.filter = 'blur(2px) brightness(1.5)';
+            setTimeout(() => { l.style.opacity = 0; l.style.filter = 'blur(0px) brightness(1)'; }, 150);
         }
 
-        // Select tornado function
+        // Rain effect
+        function makeRain(show) {
+            const r = document.getElementById('rain');
+            r.innerHTML = '';
+            if (!show) return;
+            for (let i=0; i<150; i++) {
+                const drop = document.createElement('div');
+                drop.style.position = 'absolute';
+                drop.style.width = '1px';
+                drop.style.height = `${Math.random()*15+5}px`;
+                drop.style.background = 'rgba(255,255,255,0.3)';
+                drop.style.left = `${Math.random()*100}%`;
+                drop.style.top = `${Math.random()*100}%`;
+                drop.style.animation = 'riseDebris 1s linear infinite';
+                drop.style.animationDelay = `${Math.random()}s`;
+                r.appendChild(drop);
+            }
+            r.style.opacity = 0.6;
+        }
+
+        // SELECT TORNADO FUNCTION
         function selectTornado(type) {
             // Reset buttons
-            document.querySelectorAll('.tornado-btn').forEach(btn => btn.classList.remove('border-blue-400', 'bg-supercell/90'));
-            document.getElementById(`btn-${type}`).classList.add('border-blue-400', 'bg-supercell/90');
+            document.querySelectorAll('.tornado-btn').forEach(btn => {
+                btn.classList.remove('border-skyLight', 'scale-105', 'shadow-[0_0_20px_rgba(135,206,235,0.4)]');
+            });
+            document.getElementById(`btn-${type}`).classList.add('border-skyLight', 'scale-105', 'shadow-[0_0_20px_rgba(135,206,235,0.4)]');
 
             const data = tornadoData[type];
-            const anim = data.animation;
 
-            // Update visuals
-            const sky = document.getElementById('sky');
-            sky.className = sky.className.replace(/from-sky to-\S+/, `from-sky ${anim.skyColor}`);
-
-            const ground = document.getElementById('ground');
-            ground.className = ground.className.replace(/bg-\S+/, anim.groundColor);
-
+            // UPDATE SHAPE & SIZE
             const tornado = document.getElementById('tornado');
-            tornado.style.width = anim.width;
-            tornado.style.height = anim.height;
-            tornado.className = `tornado-path origin-bottom transition-all duration-700 ${anim.rotation} swirl`;
-            tornado.style.opacity = anim.opacity;
+            tornado.className = `origin-bottom transition-all duration-1000 opacity-100 ${data.shape}`;
+            tornado.style.width = data.width;
+            tornado.style.height = data.height;
+            tornado.querySelector('div').className = `relative w-full h-full ${data.rotation} ${data.movement}`;
 
-            // Sub-vortices
-            const subVortices = document.getElementById('sub-vortices');
-            subVortices.style.opacity = type === 'multiple-vortex' ? 1 : 0;
+            // UPDATE SKY & GROUND
+            document.getElementById('sky').className = `absolute top-0 left-0 w-full h-3/4 bg-gradient-to-b ${data.sky} transition-all duration-1000`;
+            document.getElementById('ground').className = `absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t ${data.ground} transition-all duration-1000`;
 
-            // Debris
-            document.getElementById('debris-field').style.opacity = anim.showDebris ? 0.8 : 0;
+            // SUB-VORTICES
+            document.getElementById('sub-vortices').style.opacity = type === 'multiple-vortex' ? 1 : 0;
 
-            // Lightning
-            if (anim.showLightning) {
-                if (window.lightningInterval) clearInterval(window.lightningInterval);
-                window.lightningInterval = setInterval(flashLightning, Math.random() * 3000 + 2000);
+            // EFFECTS
+            const eff = data.effects;
+            document.getElementById('debris-field').style.opacity = eff.debris || eff.water ? 0.9 : 0;
+            createParticles('debris-field', 40, eff.water ? 'rgba(255,255,255,0.6)' : 'rgba(120,74,39,0.7)');
+
+            makeRain(eff.rain);
+
+            if (eff.lightning) {
+                if (window.lightningTimer) clearInterval(window.lightningTimer);
+                window.lightningTimer = setInterval(flashLightning, Math.random()*4000 + 1500);
             } else {
-                if (window.lightningInterval) clearInterval(window.lightningInterval);
+                if (window.lightningTimer) clearInterval(window.lightningTimer);
                 document.getElementById('lightning').style.opacity = 0;
             }
 
-            // Update info panel
+            // UPDATE INFO
             document.getElementById('tornado-title').textContent = data.title;
             document.getElementById('tornado-desc').textContent = data.description;
-
             const stepsEl = document.getElementById('formation-steps');
             stepsEl.innerHTML = '';
-            data.steps.forEach(step => {
+            data.steps.forEach(s => {
                 const p = document.createElement('p');
-                p.textContent = step;
+                p.className = 'text-gray-100';
+                p.textContent = '✓ ' + s;
                 stepsEl.appendChild(p);
             });
         }
 
-        // Initialize with supercell
+        // START WITH SUPERCELL
         selectTornado('supercell');
     </script>
 </body>
