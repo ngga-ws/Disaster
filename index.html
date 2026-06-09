@@ -3,308 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PredictDisaster.org | Global Disaster Map</title>
+    <title>Tornado Formation Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #0f172a; }
-
-        /* Login Screen */
-        #login-screen { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(135deg, #1e3a8a, #0f172a);
-            color: white; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9999;
-        }
-
-        /* Map */
-        #map { width: 100vw; height: 100vh; }
-
-        /* User Bar */
-        .user-bar {
-            position: absolute; top: 15px; right: 20px;
-            background: rgba(255,255,255,0.95);
-            color: #111; padding: 8px 14px; border-radius: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1000;
-            font-size: 13px; display: flex; align-items: center; gap: 10px;
-        }
-        .logout-btn {
-            background: #dc2626; color: white; border: none;
-            padding: 4px 10px; border-radius: 12px; font-size: 11px; cursor: pointer;
-        }
-
-        /* Disaster Selector Menu */
-        .disaster-menu {
-            position: absolute; top: 15px; left: 20px;
-            background: rgba(255,255,255,0.95);
-            padding: 12px 16px; border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1000;
-            font-size: 14px; min-width: 200px;
-        }
-        .menu-title { font-weight: bold; margin-bottom: 8px; color: #1e293b; }
-        .menu-item {
-            display: flex; align-items: center; gap: 8px;
-            padding: 6px 8px; border-radius: 6px;
-            cursor: pointer; transition: background 0.2s;
-            margin: 2px 0;
-        }
-        .menu-item:hover { background: #e2e8f0; }
-        .menu-item.active { background: #bfdbfe; font-weight: 500; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-
-        /* 3D ANIMATED MARKER STYLES */
-        .marker-3d {
-            width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-
-        /* Tornado: Spinning + Funnel */
-        .tornado-anim {
-            width: 24px; height: 24px;
-            background: conic-gradient(#dc2626, #f87171, #dc2626);
-            border-radius: 50%;
-            animation: spin 1.2s linear infinite, pulse 1.5s ease-in-out infinite;
-            box-shadow: 0 0 10px #dc2626, 0 0 20px #dc262680;
-        }
-
-        /* Tsunami: Wave Motion */
-        .tsunami-anim {
-            width: 28px; height: 16px;
-            background: #0ea5e9;
-            border-radius: 50%;
-            animation: wave 1s ease-in-out infinite;
-            box-shadow: 0 0 12px #0ea5e9, 0 0 20px #0ea5e980;
-        }
-
-        /* Typhoon: Fast Spin + Glow */
-        .typhoon-anim {
-            width: 26px; height: 26px;
-            background: conic-gradient(#ea580c, #fbbf24, #ea580c);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite, pulse 1s ease-in-out infinite;
-            box-shadow: 0 0 15px #ea580c, 0 0 25px #ea580c80;
-        }
-
-        /* Earthquake: Shake + Ripple */
-        .quake-anim {
-            width: 22px; height: 22px;
-            background: #7c3aed;
-            border-radius: 4px;
-            animation: shake 0.5s ease-in-out infinite, ripple 2s linear infinite;
-            box-shadow: 0 0 12px #7c3aed, 0 0 20px #7c3aed80;
-        }
-
-        /* Flood: Expand + Fade */
-        .flood-anim {
-            width: 20px; height: 20px;
-            background: #2563eb;
-            border-radius: 50%;
-            animation: expand 2s ease-in-out infinite;
-            box-shadow: 0 0 12px #2563eb, 0 0 20px #2563eb80;
-        }
-
-        /* Volcano: Erupt + Pulse */
-        .volcano-anim {
-            width: 24px; height: 24px;
-            background: #ef4444;
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            animation: erupt 1.5s ease-in-out infinite;
-            box-shadow: 0 0 14px #ef4444, 0 0 22px #ef444480;
-        }
-
-        /* Storm: Rotate + Flash */
-        .storm-anim {
-            width: 26px; height: 26px;
-            background: #64748b;
-            border-radius: 50%;
-            animation: spin 2s linear infinite, flash 1s ease-in-out infinite;
-            box-shadow: 0 0 12px #64748b, 0 0 20px #64748b80;
-        }
-
-        /* ANIMATION KEYFRAMES */
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
-        @keyframes wave { 0%,100% { transform: translateY(0) scaleX(1); } 50% { transform: translateY(-6px) scaleX(1.2); } }
-        @keyframes shake { 0%,100% { transform: translate(0,0); } 25% { transform: translate(-3px,2px); } 75% { transform: translate(3px,-2px); } }
-        @keyframes expand { 0% { transform: scale(0.8); opacity: 0.7; } 100% { transform: scale(1.4); opacity: 0; } }
-        @keyframes erupt { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2) translateY(-4px); } }
-        @keyframes flash { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-        @keyframes ripple { 0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6); } 100% { box-shadow: 0 0 0 15px rgba(124, 58, 237, 0); } }
-    </style>
-</head>
-<body>
-
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-2">PredictDisaster.org</h1>
-            <p class="text-lg opacity-90">Global Disaster Tracking • Live 3D Animations</p>
-            <p class="text-sm mt-2 opacity-75">Sign in with Google — stays logged in</p>
-        </div>
-
-        <div id="g_id_onload"
-             data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
-             data-callback="handleGoogleLogin"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_blue" data-text="signin_with"></div>
-    </div>
-
-    <!-- MAP CONTAINER -->
-    <div id="map-container" style="display: none;">
-        <div id="map"></div>
-
-        <!-- USER BAR -->
-        <div class="user-bar">
-            <span id="user-email"></span>
-            <button onclick="logout()" class="logout-btn">Logout</button>
-        </div>
-
-        <!-- DISASTER SELECTOR MENU -->
-        <div class="disaster-menu">
-            <div class="menu-title">Show / Hide Disasters</div>
-            <div class="menu-item active" data-type="tornado" onclick="toggleDisaster('tornado')">
-                <span class="dot" style="background:#dc2626"></span> Tornado
-            </div>
-            <div class="menu-item active" data-type="tsunami" onclick="toggleDisaster('tsunami')">
-                <span class="dot" style="background:#0ea5e9"></span> Tsunami (Forming)
-            </div>
-            <div class="menu-item active" data-type="typhoon" onclick="toggleDisaster('typhoon')">
-                <span class="dot" style="background:#ea580c"></span> Typhoon / Cyclone
-            </div>
-            <div class="menu-item active" data-type="earthquake" onclick="toggleDisaster('earthquake')">
-                <span class="dot" style="background:#7c3aed"></span> Earthquake
-            </div>
-            <div class="menu-item active" data-type="flood" onclick="toggleDisaster('flood')">
-                <span class="dot" style="background:#2563eb"></span> Flood
-            </div>
-            <div class="menu-item active" data-type="volcano" onclick="toggleDisaster('volcano')">
-                <span class="dot" style="background:#ef4444"></span> Volcano
-            </div>
-            <div class="menu-item active" data-type="storm" onclick="toggleDisaster('storm')">
-                <span class="dot" style="background:#64748b"></span> Severe Storm
-            </div>
-        </div>
-    </div>
-
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
-        let map;
-        let currentUser = null;
-        let markers = {}; // store markers to show/hide
-
-        // --------------------------
-        // LOGIN & VERIFICATION
-        // --------------------------
-        function handleGoogleLogin(response) {
-            const token = response.credential;
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            currentUser = { email: payload.email, verified: true };
-            localStorage.setItem('predictDisasterUser', JSON.stringify(currentUser));
-            showMapView();
-        }
-
-        function checkExistingLogin() {
-            const saved = localStorage.getItem('predictDisasterUser');
-            if (saved) {
-                try {
-                    currentUser = JSON.parse(saved);
-                    if (currentUser.verified) { showMapView(); return true; }
-                } catch (e) { localStorage.removeItem('predictDisasterUser'); }
-            }
-            return false;
-        }
-
-        function logout() {
-            localStorage.removeItem('predictDisasterUser');
-            location.reload();
-        }
-
-        function showMapView() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('map-container').style.display = 'block';
-            document.getElementById('user-email').textContent = currentUser.email;
-            initMap();
-        }
-
-        // --------------------------
-        // CREATE 3D ANIMATED MARKER
-        // --------------------------
-        function create3DMarker(type) {
-            const animClass = {
-                tornado: 'tornado-anim',
-                tsunami: 'tsunami-anim',
-                typhoon: 'typhoon-anim',
-                earthquake: 'quake-anim',
-                flood: 'flood-anim',
-                volcano: 'volcano-anim',
-                storm: 'storm-anim'
-            };
-
-            return L.divIcon({
-                className: 'marker-3d',
-                html: `<div class="${animClass[type]}"></div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-        }
-
-        // --------------------------
-        // TOGGLE SHOW / HIDE
-        // --------------------------
-        function toggleDisaster(type) {
-            const menuItem = document.querySelector(`[data-type="${type}"]`);
-            menuItem.classList.toggle('active');
-
-            if (markers[type]) {
-                if (menuItem.classList.contains('active')) {
-                    markers[type].forEach(m => m.addTo(map));
-                } else {
-                    markers[type].forEach(m => map.removeLayer(m));
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sky: '#87CEEB',
+                        storm: '#4A5568',
+                        dirt: '#8B4513',
+                        funnel: '#D3D3D3',
+                        supercell: '#2C3E50'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
                 }
             }
         }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .tornado-path {
+                clip-path: polygon(45% 0%, 55% 0%, 70% 100%, 30% 100%);
+            }
+            .rotate-slow {
+                animation: rotate 8s linear infinite;
+            }
+            .rotate-medium {
+                animation: rotate 5s linear infinite;
+            }
+            .rotate-fast {
+                animation: rotate 3s linear infinite;
+            }
+            .swirl {
+                animation: swirl 4s ease-in-out infinite alternate;
+            }
+            @keyframes rotate {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            @keyframes swirl {
+                0% { transform: translateX(-5%) rotate(2deg); }
+                100% { transform: translateX(5%) rotate(-2deg); }
+            }
+            .dust-particle {
+                position: absolute;
+                background-color: #A0522D;
+                border-radius: 50%;
+                opacity: 0.7;
+                animation: rise 3s linear infinite;
+            }
+            @keyframes rise {
+                0% { transform: translateY(20px) scale(0.5); opacity: 0.4; }
+                100% { transform: translateY(-100px) scale(1); opacity: 0; }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-storm/80 backdrop-blur-md py-4 px-6 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-[clamp(1.8rem,4vw,3rem)] font-bold text-white flex items-center gap-3">
+                <i class="fa fa-tornado text-blue-300"></i>
+                Tornado Formation Simulator
+            </h1>
+            <p class="text-gray-300 text-sm md:text-base mt-2 md:mt-0">See how different tornadoes form and behave</p>
+        </div>
+    </header>
 
-        // --------------------------
-        // INIT MAP & DISASTERS
-        // --------------------------
-        function initMap() {
-            map = L.map('map', { center: [20, 0], zoom: 2, minZoom: 2, maxZoom: 18 });
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Controls -->
+        <div class="bg-storm/40 rounded-xl p-6 mb-8 shadow-xl">
+            <h2 class="text-xl font-semibold mb-4">Choose Tornado Type</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <button onclick="selectTornado('supercell')" id="btn-supercell" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
+                    <span class="block font-bold">Supercell Tornado</span>
+                    <span class="text-xs text-gray-300">Strongest, most destructive</span>
+                </button>
+                <button onclick="selectTornado('landspout')" id="btn-landspout" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
+                    <span class="block font-bold">Landspout</span>
+                    <span class="text-xs text-gray-300">Weak, narrow, rope-like</span>
+                </button>
+                <button onclick="selectTornado('waterspout')" id="btn-waterspout" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
+                    <span class="block font-bold">Waterspout</span>
+                    <span class="text-xs text-gray-300">Forms over water</span>
+                </button>
+                <button onclick="selectTornado('multiple-vortex')" id="btn-multiple-vortex" class="tornado-btn bg-supercell/70 hover:bg-supercell border-2 border-transparent hover:border-blue-400 rounded-lg p-3 transition-all">
+                    <span class="block font-bold">Multiple-Vortex</span>
+                    <span class="text-xs text-gray-300">Smaller funnels inside main</span>
+                </button>
+            </div>
+        </div>
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; PredictDisaster.org', noWrap: true
-            }).addTo(map);
+        <!-- Simulation Area -->
+        <div class="relative w-full h-[500px] bg-sky/30 rounded-xl overflow-hidden shadow-2xl mb-8">
+            <!-- Sky & Clouds -->
+            <div id="sky" class="absolute top-0 left-0 w-full h-3/4 bg-gradient-to-b from-sky to-gray-700 transition-all duration-1000">
+                <div id="clouds" class="absolute w-full h-full overflow-hidden">
+                    <!-- Cloud layers will be added via JS -->
+                </div>
+            </div>
 
-            map.setMaxBounds([[-90, -180], [90, 180]]);
+            <!-- Ground -->
+            <div id="ground" class="absolute bottom-0 left-0 w-full h-1/4 bg-dirt/80 transition-all duration-1000"></div>
 
-            // DISASTER DATA
-            const disasters = [
-                { type: 'tornado', name: 'Tornado Warning', lat: 35.8, lon: -98.5, info: 'Tornado on ground | USA' },
-                { type: 'tsunami', name: 'Tsunami (Forming)', lat: 32.3, lon: 142.1, info: 'Underwater quake | Waves forming | Japan' },
-                { type: 'typhoon', name: 'Super Typhoon', lat: 9.2, lon: 128.4, info: '185km/h winds | Signal 4 | Philippines' },
-                { type: 'earthquake', name: 'M7.2 Earthquake', lat: -15.5, lon: -72.8, info: 'Depth 12km | Strong shake | Peru' },
-                { type: 'flood', name: 'Major Flood', lat: -33.8, lon: 151.0, info: 'River overflow | Australia' },
-                { type: 'volcano', name: 'Volcano Eruption', lat: 19.4, lon: -98.6, info: 'Ash cloud | Evacuate | Mexico' },
-                { type: 'storm', name: 'Severe Storm', lat: 54.0, lon: -4.5, info: 'Hurricane winds | UK' }
-            ];
+            <!-- Tornado Container -->
+            <div id="tornado-container" class="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-full h-[75%] flex justify-center items-end">
+                <div id="tornado" class="tornado-path w-20 origin-bottom transition-all duration-700 opacity-0">
+                    <!-- Tornado layers -->
+                    <div class="relative w-full h-full rotate-medium">
+                        <div class="absolute w-full h-full bg-funnel/90"></div>
+                        <div class="absolute w-[80%] h-full left-[10%] bg-funnel/80"></div>
+                        <div class="absolute w-[60%] h-full left-[20%] bg-funnel/70"></div>
+                        <div class="absolute w-[40%] h-full left-[30%] bg-funnel/60"></div>
+                    </div>
+                </div>
 
-            // GROUP MARKERS BY TYPE
-            disasters.forEach(d => {
-                const marker = L.marker([d.lat, d.lon], { icon: create3DMarker(d.type) })
-                    .bindPopup(`<b>${d.name}</b><br>${d.info}`);
+                <!-- Multiple Vortex Add-ons -->
+                <div id="sub-vortices" class="absolute bottom-0 w-full h-full opacity-0">
+                    <div class="absolute bottom-0 left-[40%] w-8 h-40 tornado-path rotate-fast bg-gray-400/80 origin-bottom"></div>
+                    <div class="absolute bottom-0 left-[55%] w-6 h-32 tornado-path rotate-fast bg-gray-400/70 origin-bottom"></div>
+                </div>
+            </div>
 
-                if (!markers[d.type]) markers[d.type] = [];
-                markers[d.type].push(marker);
-                marker.addTo(map);
-            });
+            <!-- Dust & Debris -->
+            <div id="debris-field" class="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-40 h-20 opacity-0">
+                <!-- Dust particles added via JS -->
+            </div>
 
-            // SAVE DATA
-            localStorage.setItem('predictDisasterData', JSON.stringify(disasters));
+            <!-- Lightning -->
+            <div id="lightning" class="absolute top-1/4 left-1/2 -translate-x-1/2 w-1 h-20 bg-white opacity-0"></div>
+        </div>
+
+        <!-- Information Panel -->
+        <div id="info-panel" class="bg-storm/40 rounded-xl p-6 shadow-xl transition-all">
+            <h2 id="tornado-title" class="text-2xl font-bold mb-2">Select a Tornado Type</h2>
+            <p id="tornado-desc" class="text-gray-200 mb-4">Choose an option above to see how it forms and learn about its characteristics.</p>
+            <div id="formation-steps" class="space-y-2 text-sm">
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-storm/80 py-4 text-center text-gray-400 text-sm">
+        <p>© 2026 Tornado Formation Simulator | Educational Tool</p>
+    </footer>
+
+    <!-- Script -->
+    <script>
+        const tornadoData = {
+            supercell: {
+                title: "Supercell Tornado",
+                description: "The strongest and most dangerous type of tornado, born from a rotating thunderstorm called a supercell. These can last for hours and produce winds over 300 mph.",
+                animation: {
+                    width: "12rem",
+                    height: "28rem",
+                    rotation: "rotate-medium",
+                    skyColor: "from-sky to-gray-800",
+                    groundColor: "bg-dirt",
+                    showLightning: true,
+                    showDebris: true,
+                    opacity: 1
+                },
+                steps: [
+                    "1. Warm, moist air meets cool, dry air, creating instability.",
+                    "2. Wind shear creates horizontal rotation in the lower atmosphere.",
+                    "3. Updrafts tilt the rotation upward, forming a mesocyclone.",
+                    "4. A rear-flank downdraft brings air down, tightening the rotation.",
+                    "5. The funnel cloud descends and touches the ground — tornado formed!"
+                ]
+            },
+            landspout: {
+                title: "Landspout Tornado",
+                description: "A weaker, rope-like tornado that forms from growing cumulus clouds, not from a rotating supercell. Usually short-lived and less destructive.",
+                animation: {
+                    width: "4rem",
+                    height: "22rem",
+                    rotation: "rotate-slow",
+                    skyColor: "from-sky to-gray-600",
+                    groundColor: "bg-dirt/70",
+                    showLightning: false,
+                    showDebris: true,
+                    opacity: 0.9
+                },
+                steps: [
+                    "1. Warm air rises and creates a developing cloud.",
+                    "2. Near-ground winds create a small area of spin.",
+                    "3. Updrafts stretch this rotation upward into the cloud.",
+                    "4. A narrow funnel forms but remains weak.",
+                    "5. Touches ground briefly then dissipates quickly."
+                ]
+            },
+            waterspout: {
+                title: "Waterspout Tornado",
+                description: "A tornado that forms over water or moves from land to water. Most are weak, but some can be strong enough to damage boats or coastal areas.",
+                animation: {
+                    width: "6rem",
+                    height: "24rem",
+                    rotation: "rotate-slow",
+                    skyColor: "from-sky to-blue-700/50",
+                    groundColor: "bg-blue-600/60",
+                    showLightning: false,
+                    showDebris: false,
+                    opacity: 0.95
+                },
+                steps: [
+                    "1. Cool air moves over warm water, creating instability.",
+                    "2. Small wind shifts create gentle rotation near the surface.",
+                    "3. Updrafts pull the rotating air upward.",
+                    "4. Condensation forms a funnel that draws up water spray.",
+                    "5. Moves slowly; usually dissipates quickly over land."
+                ]
+            },
+            "multiple-vortex": {
+                title: "Multiple-Vortex Tornado",
+                description: "A tornado with two or more small, intense funnels (sub-vortices) spinning inside the main circulation. These produce the most extreme damage paths.",
+                animation: {
+                    width: "14rem",
+                    height: "30rem",
+                    rotation: "rotate-fast",
+                    skyColor: "from-sky to-gray-900",
+                    groundColor: "bg-dirt",
+                    showLightning: true,
+                    showDebris: true,
+                    opacity: 1
+                },
+                steps: [
+                    "1. Same supercell formation as strong tornadoes.",
+                    "2. Very strong rotation creates shear within the funnel.",
+                    "3. Smaller pockets of rotation break off inside the main vortex.",
+                    "4. These sub-vortices spin rapidly around the center.",
+                    "5. Creates narrow, intense swaths of destruction."
+                ]
+            }
+        };
+
+        // Generate dust particles
+        function createDebris() {
+            const debris = document.getElementById('debris-field');
+            debris.innerHTML = '';
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('dust-particle');
+                particle.style.width = `${Math.random() * 6 + 2}px`;
+                particle.style.height = particle.style.width;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.animationDelay = `${Math.random() * 2}s`;
+                debris.appendChild(particle);
+            }
         }
 
-        window.onload = checkExistingLogin;
+        createDebris();
+
+        // Lightning flash effect
+        function flashLightning() {
+            const lightning = document.getElementById('lightning');
+            lightning.style.opacity = 1;
+            setTimeout(() => lightning.style.opacity = 0, 100);
+        }
+
+        // Select tornado function
+        function selectTornado(type) {
+            // Reset buttons
+            document.querySelectorAll('.tornado-btn').forEach(btn => btn.classList.remove('border-blue-400', 'bg-supercell/90'));
+            document.getElementById(`btn-${type}`).classList.add('border-blue-400', 'bg-supercell/90');
+
+            const data = tornadoData[type];
+            const anim = data.animation;
+
+            // Update visuals
+            const sky = document.getElementById('sky');
+            sky.className = sky.className.replace(/from-sky to-\S+/, `from-sky ${anim.skyColor}`);
+
+            const ground = document.getElementById('ground');
+            ground.className = ground.className.replace(/bg-\S+/, anim.groundColor);
+
+            const tornado = document.getElementById('tornado');
+            tornado.style.width = anim.width;
+            tornado.style.height = anim.height;
+            tornado.className = `tornado-path origin-bottom transition-all duration-700 ${anim.rotation} swirl`;
+            tornado.style.opacity = anim.opacity;
+
+            // Sub-vortices
+            const subVortices = document.getElementById('sub-vortices');
+            subVortices.style.opacity = type === 'multiple-vortex' ? 1 : 0;
+
+            // Debris
+            document.getElementById('debris-field').style.opacity = anim.showDebris ? 0.8 : 0;
+
+            // Lightning
+            if (anim.showLightning) {
+                if (window.lightningInterval) clearInterval(window.lightningInterval);
+                window.lightningInterval = setInterval(flashLightning, Math.random() * 3000 + 2000);
+            } else {
+                if (window.lightningInterval) clearInterval(window.lightningInterval);
+                document.getElementById('lightning').style.opacity = 0;
+            }
+
+            // Update info panel
+            document.getElementById('tornado-title').textContent = data.title;
+            document.getElementById('tornado-desc').textContent = data.description;
+
+            const stepsEl = document.getElementById('formation-steps');
+            stepsEl.innerHTML = '';
+            data.steps.forEach(step => {
+                const p = document.createElement('p');
+                p.textContent = step;
+                stepsEl.appendChild(p);
+            });
+        }
+
+        // Initialize with supercell
+        selectTornado('supercell');
     </script>
 </body>
 </html>
